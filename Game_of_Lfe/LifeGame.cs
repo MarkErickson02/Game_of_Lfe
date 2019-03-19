@@ -4,80 +4,93 @@ namespace Game_of_Lfe
 {
     class LifeGame
     {
-        private int[,] Board;
+        public int[,] Environment { get; set; }
+        public int Generations { get; set; }
 
-        public LifeGame(int[,] board)
+        public LifeGame(int[,] startingEnvironment)
         {
-            this.Board = board;
+            this.Environment = startingEnvironment;
+            Generations = 0;
         }
 
         public LifeGame(int rows, int cols)
         {
-            Board = new int[rows,cols];
+            Environment = new int[rows,cols];
+            Generations = 0;
         }
 
-        public int FindNeighborCount(LifeGame board,int row, int col)
+        public int FindNeighborCount(LifeGame generation, int row, int col)
         {
             int neighbors = 0;
+
+            // Above
             if (row - 1 >= 0)
             {
-                neighbors += board.Board[row - 1, col];
+                neighbors += generation.Environment[row - 1, col];
             }
-            if (row + 1 < board.Board.GetLength(0))
+            // Below
+            if (row + 1 < generation.Environment.GetLength(0))
             {
-                neighbors += board.Board[row + 1, col];
+                neighbors += generation.Environment[row + 1, col];
             }
+            // Left
             if (col - 1 >= 0)
             {
-                neighbors += board.Board[row, col - 1];
+                neighbors += generation.Environment[row, col - 1];
             }
-            if (col + 1 < board.Board.GetLength(1))
+            // Right
+            if (col + 1 < generation.Environment.GetLength(1))
             {
-                neighbors += board.Board[row, col + 1];
+                neighbors += generation.Environment[row, col + 1];
             }
+            // Diagonal Above and Left
             if (row - 1 >= 0 && col - 1 >= 0)
             {
-                neighbors += board.Board[row - 1, col - 1];
+                neighbors += generation.Environment[row - 1, col - 1];
             }
-            if (row + 1 < board.Board.GetLength(0) && col - 1 >= 0)
+            // Diagonal Below and Right
+            if (row + 1 < generation.Environment.GetLength(0) && col - 1 >= 0)
             {
-                neighbors += board.Board[row + 1, col - 1];
+                neighbors += generation.Environment[row + 1, col - 1];
             }
-            if (row - 1 >= 0 && col + 1 < board.Board.GetLength(1))
+            // Diagonal Above and Right
+            if (row - 1 >= 0 && col + 1 < generation.Environment.GetLength(1))
             {
-                neighbors += board.Board[row - 1, col + 1];
+                neighbors += generation.Environment[row - 1, col + 1];
             }
-            if (row + 1 < board.Board.GetLength(0) && col + 1 < board.Board.GetLength(1))
+            // Diagonal Below and Left
+            if (row + 1 < generation.Environment.GetLength(0) && col + 1 < generation.Environment.GetLength(1))
             {
-                neighbors += board.Board[row + 1, col + 1];
+                neighbors += generation.Environment[row + 1, col + 1];
             }
             return neighbors;
         }
 
-        public int[,] FindNextGeneration(LifeGame game)
+        public int[,] FindNextGeneration(LifeGame generation)
         {
-            int[,] nextGen = new int[game.Board.GetLength(0), game.Board.GetLength(1)];
-            for (int i=0; i < nextGen.GetLength(0); i++)
+            int[,] nextGen = new int[generation.Environment.GetLength(0), generation.Environment.GetLength(1)];
+            for (int row=0; row < nextGen.GetLength(0); row++)
             {
-                for (int j=0; j < nextGen.GetLength(1); j++)
+                for (int col=0; col < nextGen.GetLength(1); col++)
                 {
-                    int neighbors = game.FindNeighborCount(game, i, j);
-                    if (game.Board[i,j] == 1)
+                    int neighbors = generation.FindNeighborCount(generation, row, col);
+
+                    if (generation.Environment[row, col] == 1)
                     {
                         if ( neighbors < 2 || neighbors > 3)
                         {
-                            nextGen[i, j] = 0;
+                            nextGen[row, col] = 0;
                         }
                         else if ( neighbors == 2 || neighbors == 3)
                         {
-                            nextGen[i, j] = 1;
+                            nextGen[row, col] = 1;
                         }
                     }
                     else
                     {
                         if (neighbors == 3)
                         {
-                            nextGen[i, j] = 1;
+                            nextGen[row, col] = 1;
                         }
                     }
                 }
@@ -97,27 +110,29 @@ namespace Game_of_Lfe
             }
         }
 
-        static void Main(string[] args)
+        public static int[,] CreateRandom2dArray(Random rng, int minValue, int maxValue)
         {
-            
-            Random rng = new Random();
             //int row = rng.Next(3, 40);
             //int col = rng.Next(3, 40);
             int row = 40;
             int col = 90;
             int[,] start = new int[row, col];
-            for (int i=0; i < row; i++)
+            for (int i = 0; i < row; i++)
             {
-                for (int j=0; j<col; j++)
+                for (int j = 0; j < col; j++)
                 {
-                    start[i, j] = rng.Next(0, 2);
+                    start[i, j] = rng.Next(minValue, maxValue);
                 }
             }
-            LifeGame life = new LifeGame(start);
+            return start;
+        }
 
-            int[,] nextGen = life.FindNextGeneration(life);
-            life.Board = nextGen;
-
+        static void Main(string[] args)
+        {
+            
+            Random rng = new Random();
+            int[,] startingEnv = CreateRandom2dArray(rng, 0, 2);
+            LifeGame life = new LifeGame(startingEnv);
             int gen = rng.Next(1, int.MaxValue);
             Console.WriteLine("Number of generations: " + gen);
 
@@ -127,7 +142,8 @@ namespace Game_of_Lfe
                 Console.WriteLine("Generation Number: " + i);
                 int[,] generation = life.FindNextGeneration(life);
                 Print2DArray(generation);
-                life.Board = generation;
+                life.Environment = generation;
+                life.Generations = life.Generations++;
                 Console.WriteLine("\n");
             }
         }
